@@ -40,6 +40,13 @@ class SearchQuery
     private $query = '';
 
     /**
+     * Database query WHERE parameters
+     *
+     * @var array
+     */
+    private $where = [];
+
+    /**
      * Valid meta keys
      *
      * @var array
@@ -288,67 +295,136 @@ class SearchQuery
      */
     private function updateSearchQueryWhere()
     {
-        global $wpdb;
-
-        $parts = [];
-
-        // Restrict results to network members
-        $roles = (new Roles)->roles();
-
-        if ($roles) {
-            foreach ($roles as $role) {
-                if (!isset($role['name']) || !$role['name']) {
-                    continue;
-                }
-
-                $parts[] = $wpdb->prepare("(SELECT meta_value
-                        FROM {$wpdb->usermeta}
-                        WHERE meta_key = '{$wpdb->base_prefix}capabilities'
-                            AND user_id = ID
-                        LIMIT 1)
-                    LIKE '%%%s%%'", $role['name']);
-            }
-        }
-
-        // Search term, optionally restricted to field
-        if ($this->term) {
-            $field = 'all_fields';
-
-            if ($this->field) {
-                $field = $this->field;
-            }
-
-            $parts[] = $wpdb->prepare("`$field` LIKE '%%%s%%'", $this->term);
-        }
-
-        // Limit results to surname initial
-        if ($this->initial) {
-            $parts[] = $wpdb->prepare('initial = "%s"', $this->initial);
-        }
-
-        // Limit results by meta fields
-        if ($this->meta) {
-            foreach ($this->meta as $key => $values) {
-                if (!$values) {
-                    continue;
-                }
-
-                $sub_parts = [];
-
-                foreach ($values as $value) {
-                    $sub_parts[] = $wpdb->prepare("`$key` LIKE '%%%s%%'", $value);
-                }
-
-                $parts[] = '(' . implode(' OR ', $sub_parts) . ')';
-            }
-        }
+        $this->updateSearchQueryWhereRole();
+        $this->updateSearchQueryWhereApproved();
+        $this->updateSearchQueryWhereTerm();
+        $this->updateSearchQueryWhereInitial();
+        $this->updateSearchQueryWhereMeta();
 
         // No restrictions? Return all members.
-        if (!$parts) {
+        if (!$this->where) {
             return;
         }
 
-        $this->append('HAVING ' . implode(' AND ', $parts));
+        $this->append('HAVING ' . implode(' AND ', $this->where));
+    }
+
+    /**
+     * Set search query WHERE parameters for user role(s)
+     *
+     * @return void
+     */
+    private function updateSearchQueryWhereRole()
+    {
+        global $wpdb;
+
+        $roles = (new Roles)->roles();
+
+        if (!$roles) {
+            return;
+        }
+
+        foreach ($roles as $role) {
+            if (!isset($role['name']) || !$role['name']) {
+                continue;
+            }
+
+            $this->where[] = $wpdb->prepare("(SELECT meta_value
+                    FROM {$wpdb->usermeta}
+                    WHERE meta_key = '{$wpdb->base_prefix}capabilities'
+                        AND user_id = ID
+                    LIMIT 1)
+                LIKE '%%%s%%'", $role['name']);
+        }
+    }
+
+    /**
+     * Set search query WHERE parameters for approved users
+     *
+     * Provides compatibility with the New User Approve plugin:
+     * <https://wordpress.org/plugins/new-user-approve/>
+     *
+     * @return void
+     */
+    private function updateSearchQueryWhereApproved()
+    {
+        global $wpdb;
+
+        if (!function_exists('pw_new_user_approve')) {
+            return;
+        }
+
+        $this->where[] = "(SELECT meta_value
+            FROM {$wpdb->usermeta}
+            WHERE meta_key = 'pw_user_status'
+                AND user_id = ID
+            LIMIT 1) = 'approved'";
+    }
+
+    /**
+     * Set search query WHERE parameters for search terms
+     *
+     * @return void
+     */
+    private function updateSearchQueryWhereTerm()
+    {
+        global $wpdb;
+
+        if (!$this->term) {
+            return;
+        }
+
+        $field = 'all_fields';
+
+        if ($this->field) {
+            $field = $this->field;
+        }
+
+        $this->where[] = $wpdb->prepare("`$field` LIKE '%%%s%%'", $this->term);
+    }
+
+    /**
+     * Set search query WHERE parameters for user name initials
+     *
+     * @return void
+     */
+    private function updateSearchQueryWhereInitial()
+    {
+        global $wpdb;
+
+        if (!$this->initial) {
+            return;
+        }
+
+        $this->where[] = $wpdb->prepare('initial = "%s"', $this->initial);
+    }
+
+    /**
+     * Set search query WHERE parameters for user meta
+     *
+     * @return void
+     */
+    private function updateSearchQueryWhereMeta()
+    {
+        global $wpdb;
+
+        if (!$this->meta) {
+            return;
+        }
+
+        foreach ($this->meta as $key => $values) {
+            if (!$values) {
+                continue;
+            }
+
+            $sub_parts = [];
+
+            foreach ($values as $value) {
+                $sub_parts[] = $wpdb->prepare("`$key` LIKE '%%%s%%'", $value);
+            }
+
+            $this->where[] = '(' . implode(' OR ', $sub_parts) . ')';
+        }
     }
 
     /**
