@@ -47,4 +47,19 @@ class Plugin
         $admin->setViewPath(dirname($this->file) . '/views');
         $admin->init();
     }
+
+    /**
+     * Is this an associative array?
+     *
+     * @param array $foo
+     * @return boolean
+     */
+    public static function isAssociativeArray($foo)
+    {
+        if ($foo === []) {
+            return false;
+        }
+
+        return array_keys($foo) !== range(0, count($foo) - 1);
+    }
 }

@@ -1,10 +1,15 @@
 <?php
 
-if (!isset($field['options'])) {
+if (!isset($field['options']) || !$field['options']) {
     return;
 }
 
+$options = $field['options'];
 $value = get_user_meta($user->ID, $key, true);
+
+if (!\Cgit\MemberNetwork\Plugin::isAssociativeArray($options)) {
+    $options = array_combine($options, $options);
+}
 
 ?>
 
@@ -16,11 +21,11 @@ $value = get_user_meta($user->ID, $key, true);
     <td>
         <?php
 
-        foreach ($field['options'] as $option) {
+        foreach ($options as $option => $label) {
             ?>
             <label>
                 <input type="radio" name="<?= $key ?>" value="<?= $option ?>" <?= $option == $value ? 'checked' : '' ?> />
-                <?= $option ?>
+                <?= $label ?>
             </label>
 
             <br />
