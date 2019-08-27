@@ -11,6 +11,13 @@ if (!\Cgit\MemberNetwork\Plugin::isAssociativeArray($options)) {
     $options = array_combine($options, $options);
 }
 
+function cgit_trim_member_values(&$value)
+{
+    $value = trim($value);
+}
+
+array_walk($values, 'cgit_trim_member_values');
+
 ?>
 
 <tr>
