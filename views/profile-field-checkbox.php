@@ -24,7 +24,7 @@ if (!\Cgit\MemberNetwork\Plugin::isAssociativeArray($options)) {
         foreach ($field['options'] as $option => $label) {
             ?>
             <label>
-                <input type="checkbox" name="<?= $key ?>[]" value="<?= $option ?>" <?= in_array($option, $values) ? 'checked' : '' ?> />
+                <input type="checkbox" name="<?= $key ?>[]" value="<?= $option ?>" <?= in_array($label, $values) ? 'checked' : '' ?> />
                 <?= $label ?>
             </label>
 
