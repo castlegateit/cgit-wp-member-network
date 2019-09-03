@@ -229,8 +229,12 @@ class Member
             'role' => (new Roles)->defaultRole()['name'],
         ]);
 
+        do_action('cgit_member_network_member_pre_create', $this, $data);
+
         $this->data['ID'] = wp_insert_user($data);
         $this->updateMetaValues();
+
+        do_action('cgit_member_network_member_create', $this, $data);
     }
 
     /**
@@ -244,8 +248,12 @@ class Member
             return trigger_error($this->data['user_email'] . ' does not exist');
         }
 
+        do_action('cgit_member_network_member_pre_update', $this, $this->data);
+
         wp_update_user($this->data);
         $this->updateMetaValues();
+
+        do_action('cgit_member_network_member_update', $this, $this->data);
     }
 
     /**
