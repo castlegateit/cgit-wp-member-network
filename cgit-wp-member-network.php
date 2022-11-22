@@ -3,9 +3,9 @@
 /*
 
 Plugin Name: Castlegate IT WP Member Network
-Plugin URI:
+Plugin URI: https://github.com/castlegateit/cgit-wp-member-network
 Description: Basic member network plugin.
-Version: 1.0.0
+Version: 1.0.1
 Author: Castlegate IT
 Author URI: https://www.castlegateit.co.uk/
 Network: true
