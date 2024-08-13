@@ -5,7 +5,7 @@ if (!isset($field['options']) || !$field['options']) {
 }
 
 $options = $field['options'];
-$values = get_user_meta($user->ID, $key, true);
+$values = (array) get_user_meta($user->ID, $key, true);
 
 if (!\Cgit\MemberNetwork\Plugin::isAssociativeArray($options)) {
     $options = array_combine($options, $options);
